@@ -1,0 +1,6 @@
+http://www.lainoox.com/ipc-shared-memory-c/
+http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/shm/example-2.html
+http://cgi.di.uoa.gr/~ad/OSdir/k22-lab-notes4.pdf
+http://www.cs.cf.ac.uk/Dave/C/node27.html
+
+http://beej.us/guide/bgipc/output/html/multipage/semaphores.html

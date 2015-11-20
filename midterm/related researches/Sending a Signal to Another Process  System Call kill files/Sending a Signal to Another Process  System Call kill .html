@@ -1,0 +1,313 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252"><title> Sending a Signal to Another Process: System Call kill() </title>
+</head><body alink="#666666" background="Sending%20a%20Signal%20to%20Another%20Process:%20System%20Call%20kill()_files/background.jpg" link="#22806A" text="#0A0AFF" vlink="#FF1CAC">
+
+<h1> Sending a Signal to Another Process: System Call 
+<font face="Helvetica">kill()</font> </h1>
+
+<img src="Sending%20a%20Signal%20to%20Another%20Process:%20System%20Call%20kill%28%29_files/GrLine.gif" height="3" width="700">
+<p>
+To send a signal to another process, we need to use the Unix system
+<b>kill()</b>.  The following is the prototype of <b>kill()</b>:
+</p><blockquote>
+<font color="#000000">
+<pre>int  kill(pid_t pid, int sig)
+</pre>
+</font>
+</blockquote>
+<ul>
+     <li> System call <b>kill()</b> takes two arguments.  The first,
+          <b>pid</b>, is the process ID you want to send a signal to, and the
+          second, <b>sig</b>, is the signal you want to send.  Therefore,
+          you have to find some way to know the process ID of the other
+          party.
+          </li>
+     <li> If the call to <b>kill()</b> is successful, it returns 0;
+          otherwise, the returned value is negative.
+          </li>
+     <li> Because of this capability, <b>kill()</b> can also be considered
+          as a communication mechanism among processes with signals 
+          <b>SIGUSR1</b> and <b>SIGUSR2</b>.
+     </li><li> The <b>pid</b> argument can also be zero or negative to indicate
+          that the signal should be sent to a group of processes.  But,
+          for simplicity, we will not discuss this case.
+</li></ul>
+<p>
+<img src="Sending%20a%20Signal%20to%20Another%20Process:%20System%20Call%20kill%28%29_files/GrLine.gif" height="3" width="700">
+</p><h3>Example</h3>
+
+This example consists of two processes, one of which sends <b>SIGINT</b> and
+<b>SIGQUIT</b> to interrupt and kill the other's computation.
+The following is the first, major process that performs the computation.
+Click <a href="http://www.csl.mtu.edu/cs4411.ck/www/NOTES/signal/process-a.c"><b>here</b></a> to download this program.
+<blockquote>
+<font color="#000000">
+<pre>#include  &lt;stdio.h&gt;
+#include  &lt;sys/types.h&gt;
+#include  &lt;signal.h&gt;
+#include  &lt;sys/ipc.h&gt;
+#include  &lt;sys/shm.h&gt;
+
+void  SIGINT_handler(int);   
+void  SIGQUIT_handler(int); 
+
+int   ShmID;      
+pid_t *ShmPTR;    
+
+void main(void)
+{
+     int   i;
+     pid_t pid = getpid();
+     key_t MyKey;
+
+     if (signal(SIGINT, SIGINT_handler) == SIG_ERR) {
+          printf("SIGINT install error\n");
+          exit(1);
+     }
+     if (signal(SIGQUIT, SIGQUIT_handler) == SIG_ERR) {
+          printf("SIGQUIT install error\n");
+          exit(2);
+     }
+
+     MyKey   = ftok(".", 's');    
+     ShmID   = shmget(MyKey, sizeof(pid_t), IPC_CREAT | 0666);
+     ShmPTR  = (pid_t *) shmat(ShmID, NULL, 0);
+     *ShmPTR = pid;               
+
+     for (i = 0; ; i++) {        
+          printf("From process %d: %d\n", pid, i);
+          sleep(1);
+     }
+}
+
+void  SIGINT_handler(int sig)
+{
+     signal(sig, SIG_IGN);
+     printf("From SIGINT: just got a %d (SIGINT ^C) signal\n", sig);
+     signal(sig, SIGINT_handler);
+}
+
+void  SIGQUIT_handler(int sig)
+{
+     signal(sig, SIG_IGN);
+     printf("From SIGQUIT: just got a %d (SIGQUIT ^\\) signal"
+                          " and is about to quit\n", sig);
+     shmdt(ShmPTR);
+     shmctl(ShmID, IPC_RMID, NULL);
+
+     exit(3);
+}
+</pre>
+</font>
+</blockquote>
+<p>
+</p><ul>
+     <li> This program installs two signal handlers for <b>SIGINT</b> and
+          <b>SIGQUIT</b>.  Then, it creates a shared memory, attaches this
+          shared memory to its address space, and saves its process ID
+          there for another process to retrieve.  After this is done,
+          this program enters an infinite loop.
+          </li>
+     <li> The <b>SIGINT</b> handler prints out a message indicating that
+          a <b>SIGINT</b> signal was received.
+          </li>
+     <li> The <b>SIGQUIT</b> handler prints out a message indicating a
+          <b>SIGQUIT</b> was receives.  Then, it detaches and removes
+          the shared memory, and exits!
+          </li>
+</ul>
+<p>
+When this program is run, it will print out the counter values.
+Pressing <b>Ctrl-C</b> causes the <b>SIGINT</b> handler to print
+a message telling you that a <b>SIGINT</b> was received.  Pressing
+<b>Ctrl-\</b> generates a <b>SIGQUIT</b> signal, which is received by the
+<b>SIGQUIT</b> handler.  Then, the program terminates.  This is not very
+interesting because we have already discussed about this.
+</p><p>
+Now, let us look at another program.  Click 
+<a href="http://www.csl.mtu.edu/cs4411.ck/www/NOTES/signal/process-b.c"><b>here</b></a> to download a copy.
+</p><blockquote>
+<font color="#000000">
+<pre>#include  &lt;stdio.h&gt;
+#include  &lt;sys/types.h&gt;
+#include  &lt;signal.h&gt;
+#include  &lt;sys/ipc.h&gt;
+#include  &lt;sys/shm.h&gt;
+
+void  main(void)
+{
+     pid_t   pid;
+     key_t MyKey;
+     int   ShmID;
+     pid_t *ShmPTR;
+     char  line[100], c;
+     int   i;
+
+     MyKey   = ftok(".", 's');        
+     ShmID   = shmget(MyKey, sizeof(pid_t), 0666);
+     ShmPTR  = (pid_t *) shmat(ShmID, NULL, 0);
+     pid     = *ShmPTR;                
+     shmdt(ShmPTR);                    
+
+     while (1) {                       
+          printf("Want to interrupt the other guy or kill it (i or k)? ");
+          gets(line);
+          for (i = 0; !(isalpha(line[i])); i++)
+               ;
+               c = line[i];
+          if (c == 'i' || c == 'I') {  
+               kill(pid, SIGINT);
+               printf("Sent a SIGINT signal\n");
+          }
+          else if (c == 'k' || c == 'K') {
+               printf("About to send a SIGQUIT signal\n");
+               kill(pid, SIGQUIT);     
+               printf("Done.....\n");
+               exit(0);
+          }
+          else
+               printf("Wrong keypress (%c).  Try again\n", c);
+     }
+}
+</pre>
+</font>
+</blockquote>
+<p>
+</p><ul>
+     <li> This program requests the shared memory segment created by the 
+          previous
+          program.  Since both programs use <b>ftok()</b> to create the
+          key, they should be in the same directory.
+          </li>
+     <li> Then, it retrieves the process ID stored in the shared memory segment
+          and enters an infinite loop asking for a single character input.  
+          </li>
+     <li> If the input is <b>i</b>, a <b>SIGINT</b> is sent to the
+          other process with <b>kill()</b>.  
+          </li>
+     <li> If the input is <b>k</b>, a <b>SIGQUIT</b> is sent to the
+          other process with <b>kill()</b>.   After this is done, this
+          program exits.
+          </li>
+     <li> As you can see, with <b>raise()</b> 
+          (click <a href="http://www.csl.mtu.edu/cs4411.ck/www/NOTES/signal/raise.html"><b>here</b></a> to learn about it)
+          and <b>kill()</b>, we do not need to actually press a key to
+          generate a particular signal.  Moreover, some signals have no
+          corresponding keys.
+          </li>
+</ul>
+<p>
+Now, let us see how to play with these two programs.  The first program is
+called <b>process-a</b> and the second <b>process-b</b>.  Because
+<b>process-a</b> must create a shared memory segment and save its process ID
+there, it must run first.  So, run this program in one window
+until some output lines are shown.  At this moment, the shared memory has been
+created and the process ID stored properly.
+</p><p>
+Then, move to another window and run <b>process-b</b>.    If you type
+<b>i</b>, <b>process-b</b> sends a <b>SIGINT</b> to <b>process-a</b>, and if
+ you type <b>k</b>, <b>process-b</b> send a <b>SIGQUIT</b> to <b>process-a</b>.
+
+</p><p>
+<img src="Sending%20a%20Signal%20to%20Another%20Process:%20System%20Call%20kill%28%29_files/GrLine.gif" height="3" width="700">
+</p><h3>The <font face="Courier">kill</font> Command</h3>
+<p>
+As you might have learned, <b>kill</b> is also a command for you to kill
+a running process using a process ID.  Moreover, we frequently use
+</p><blockquote>
+<font color="#000000">
+<pre>kill -9 <i>xyz</i>
+</pre>
+</font>
+</blockquote>
+to kill a process that is so stubborn that a simple <b>kill</b> is not powerful
+enough to kill.  So, what does <b>-9</b> mean?  Actually, this <b>9</b> is
+the signal number of <b>SIGKILL</b> for killing a process.  If we can use
+the <b>kill</b> system call to kill a process (<i>i.e.</i>, sending a 
+<b>SIGKILL</b> to it), it should be possible to send any signal to a process 
+withe the <b>kill</b> command.  This is true.  The <b>kill</b> command has
+the following form:
+<blockquote>
+<font color="#000000">
+<pre>kill -<b>signal</b> pid pid pid ... pid
+</pre>
+</font>
+</blockquote>
+<ul>
+     <li> The first argument, shown in boldface, is the
+          signal name that represents the signal to be sent.  This signal
+          name <font color="$FF0000"><b><i>does not</i></b></font> include
+          <b>SIG</b>.  Thus, if you want to send signals <b>SIGINT</b>,
+          <b>SIGQUIT</b> and <b>SIGKILL</b>, use <b>INT</b>, <b>QUIT</b> and
+          <b>KILL</b>, respectively.
+          </li>
+     <li> If the signal name is missing, the default <b>SIGTERM</b> is used.
+          </li>
+     <li> Following the signal name is a list of process IDs to which the
+          signal will be sent.  These process IDs are separated by white
+          spaces.  Thus, the following <b>kill</b> command sends signal
+          <b>SIGINT</b> to process IDs 13579 and 36214.
+<blockquote>
+<font color="#000000">
+<pre>kill -KILL 13579 36214
+</pre>
+</font>
+</blockquote>
+</li></ul>
+
+<p>
+Let us get back to <b>process-a</b>.  Run <b>process-a</b> in a window,
+move to another window and use 
+</p><blockquote>
+<font color="#000000">
+<pre>ps -Af | grep "process-a"
+</pre>
+</font>
+</blockquote>
+to find out the process ID of <b>process-a</b>.  Once you know its process ID,
+say 34567, you can use
+<blockquote>
+<font color="#000000">
+<pre>kill -INT 34567
+</pre>
+</font>
+</blockquote>
+to send a <b>SIGINT</b> signal to <b>process-a</b>, and use
+<blockquote>
+<font color="#000000">
+<pre>kill -QUIT 34567
+</pre>
+</font>
+</blockquote>
+to send a <b>SIGQUIT</b> signal to <b>process-a</b>.   Of course, you can use
+<blockquote>
+<font color="#000000">
+<pre>kill -KILL 34567
+</pre>
+</font>
+</blockquote>
+to kill <b>process-a</b>.  But, in this case, <b>process-a</b> will have no 
+chance to remove the shared memory, and you have to use the
+<b>ipcrm</b> command.
+<p>
+Finally, a <b>kill</b> command with 
+<font color="#000000" face="Courier"><b>-l</b></font>
+and without process IDs lists all available signals:
+</p><blockquote>
+<font color="#000000">
+<pre>kill -l
+</pre>
+</font>
+</blockquote>
+Its output may look like the follows:
+<blockquote>
+<font color="#000000">
+<pre>HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM 
+TERM USR1 USR2 CHLD PWR WINCH URG IO STOP TSTP CONT TTIN TTOU 
+VTALRM PROF XCPU XFSZ 
+</pre>
+</font>
+</blockquote>
+As you can see, <b>SIGKILL</b> is the ninth one. 
+
+</body></html>
