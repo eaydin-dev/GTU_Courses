@@ -1,0 +1,73 @@
+Begin Data Section
+0 0       # program counter
+1 0       # stack pointer
+2 0
+3 0
+4 0
+5 0
+6 0
+7 0
+8 0
+9 0
+10 5       # memory indexes 0-20 are reserved.
+11 0
+12 0
+13 0
+14 0
+15 0
+16 0
+17 0
+18 0
+19 0      # Memory location  21 contains number N.
+20 0      # 24 contains start index of the numbers to be sorted
+21 3      # N=100            number N is given at memory index=21
+22 0     
+23 0      
+24 57     #numbers to be sorted starts at index 60
+25 0
+26 0
+27 0
+28 0
+29 0
+30 0
+31 0
+32 0
+33 0
+34 0
+35 0
+36 0
+37 0
+38 0
+39 0
+40 0
+41 0
+42 0
+43 0
+44 0
+45 0
+46 115
+47 111
+48 114
+49 116
+50 50
+51 46
+52 116
+53 120
+54 116
+55 0
+56 0
+57 5
+58 3
+59 110
+End Data Section
+Begin Instruction Section
+0 SET 3 40 # i = 5
+1 ADD 40 -1  # i = i – 1
+2 CALL PRN 40 # Print i to the console
+3 JIF 40 5  # Go to 6 if i <= 0
+4 SET 1 0  # Go to 2 – remember address 0 is the program counter
+5 CALL FORK # This line will print two numbers from each process
+6 CALL PRN 4 # load the program named PRG2 to the memory and run
+7 CALL EXEC 46
+8 HLT # note that PRG2 will run two times
+End Instruction Section

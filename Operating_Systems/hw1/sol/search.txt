@@ -1,0 +1,184 @@
+Begin Data Section
+0 0       # program counter
+1 0       # stack pointer
+2 0
+3 0
+4 0
+5 0
+6 0
+7 0
+8 0
+9 0
+10 0
+11 0
+12 0     # memory indexes 0-20 are reserved.
+13 0
+14 0
+15 0
+16 0
+17 0
+18 0
+19 0
+20 0      #  21 and 22 contains key and number N. 24 contains start index of the numbers to be searched
+21 100     # N=100            number N is given at memory index=21  
+22 287     # key=287         key is given at memory index=22
+23 0      # save the first occurence of key here. For this data it should be 106. If key not found assign -1 here
+24 60     #numbers to be searched starts at index 60
+25 0
+26 0
+27 0
+28 0
+29 0
+30 0
+31 0
+32 0
+33 0
+34 0
+35 0
+36 0
+37 0
+38 0
+39 0     # you may use locations 25 to 59 as registers
+40 0
+41 0
+42 0
+43 0
+44 0
+45 0
+46 0
+47 0
+48 0
+49 0
+50 0
+51 0
+52 0
+53 0
+54 0
+55 0
+56 0
+57 0
+58 0
+59 0
+60 263    # Numbers to be searched starts at index 60
+61 249
+62 257
+63 226
+64 79
+65 276
+66 97
+67 230
+68 208
+69 178
+70 240
+71 156
+72 286
+73 131
+74 163
+75 194
+76 71
+77 79
+78 240
+79 66
+80 161
+81 199
+82 204
+83 172
+84 262
+85 159
+86 221
+87 118
+88 139
+89 257
+90 225
+91 221
+92 230
+93 67
+94 91
+95 139
+96 71
+97 271
+98 141
+99 267
+100 180
+101 69
+102 239
+103 228
+104 178
+105 290
+106 287
+107 112
+108 62
+109 297
+110 143
+111 70
+112 206
+113 187
+114 94
+115 163
+116 118
+117 223
+118 63
+119 153
+120 130
+121 147
+122 191
+123 182
+124 62
+125 175
+126 261
+127 289
+128 65
+129 251
+130 103
+131 54
+132 282
+133 226
+134 244
+135 280
+136 142
+137 222
+138 119
+139 281
+140 297
+141 127
+142 248
+143 262
+144 61
+145 156
+146 234
+147 284
+148 109
+149 188
+150 288
+151 154
+152 131
+153 270
+154 163
+155 186
+156 151
+157 300
+158 98
+159 82
+End Data Section
+Begin Instruction Section
+0 CPY 24 25		# index of next number
+1 ADDI 21 24	# mem[24] is end of array now
+2 CPY 22 26		# key
+3 CPYI 25 27	# next number is in mem[27] now
+4 SUBI 26 27	# mem[27] = mem[26] - mem[27]
+5 JIF 27 7		# if mem[27] <= 0, check from other side
+6 SET 13 0		# otherwise, skip to next number
+7 CPYI 25 27
+8 SUBI 27 26	# mem[26] = mem[27] - mem[26]
+9 JIF 26 11		# if mem[25] <= 0, we found the number
+10 SET 13 0
+11 CPY 25 23	# write the index of found number
+12 HLT			# number found. halt program.
+13 ADD 25 1
+14 CPY 24 26
+15 ADD 26 -1
+16 SUBI 25 26	# mem[26] = mem[25] - mem[26]
+17 JIF 26 2		# if mem[25] <= 0, then we have numbers to search
+18 SET -1 23	# number not found. 
+19 HLT 	
+End Instruction Section

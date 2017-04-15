@@ -1,0 +1,90 @@
+Begin Data Section
+0 0       # program counter
+1 0       # stack pointer
+2 6
+3 0
+4 0
+5 0
+6 0
+7 0
+8 0
+9 0
+10 5       # memory indexes 0-20 are reserved.
+11 0
+12 0
+13 0
+14 0
+15 0
+16 0
+17 0
+18 0
+19 0      # Memory location  21 contains number N.
+20 0      # 24 contains start index of the numbers to be sorted
+21 3      # N=100            number N is given at memory index=21
+22 0     
+23 0      
+24 57     #numbers to be sorted starts at index 60
+25 0
+26 0
+27 0
+28 0
+29 0
+30 0
+31 0
+32 0
+33 0
+34 0
+35 0
+36 0
+37 0
+38 0
+39 0      # you may use locations 25 to 59 as registers
+40 0
+41 0
+42 0
+43 0
+44 0
+45 0
+46 0
+47 0
+48 0
+49 0
+50 0
+51 0
+52 0
+53 0
+54 0
+55 0
+56 0
+57 5
+58 3
+59 10
+End Data Section
+Begin Instruction Section
+0 CPY 21 35
+1 ADDI 24 35		
+2 ADD -1 35			# mem[30] is the end of array now.
+3 SET 1 40			# counter
+4 CPY 24 25			# index of next number
+5 CPY 25 26
+6 ADD 1 26			# index of other number 
+7 CPYI 25 27		# mem[27] = next num 	# START OF INNER LOOP
+8 CPYI 26 28		# mem[28] = other num 
+9 SUBI 28 27		# mem[27] = mem[28] - mem[27]
+10 JIF 27 12		# if mem[28] > mem[27] then swap them
+11 SET 16 0			# if not, check other nums.
+12 CPYI 25 30		# SWAP METHOD
+13 CPYI 26 31
+14 CPYI2 31 25
+15 CPYI2 30 26		# END OF SWAP
+16 ADD 1 25			# increase the indexes
+17 ADD 1 26
+18 CPY 35 36
+19 SUBI 26 36 		# mem[36] = mem[26] - mem[36]
+20 JIF 36 7			# if index is less than end of array, we have numbers to sort # END OF INNER LOOP
+21 ADD 1 40
+22 CPY 21 41
+23 SUBI 40 41		# (index-ArrayLength)
+24 JIF 41 4			# if (index-ArrayLength) <= 0 then go up loop
+25 HLT
+End Instruction Section
