@@ -7,7 +7,6 @@ public class Ngram implements Serializable {
     private final int MAX = 5;
     private StringBuilder sb = new StringBuilder();
     private int n = 0;
-    private char[] subGram;
 
     private void printArr(char[] arr) {
         System.out.printf("-> ");
@@ -21,8 +20,6 @@ public class Ngram implements Serializable {
         if (grams.length > 5)
             throw new UnsupportedOperationException("Max n = 5");
 
-        if (grams.length > 1)
-            subGram = Arrays.copyOfRange(grams, 0, grams.length-1);
         n = grams.length;
         for (char gram : grams)
             sb.append(gram).append(' ');
@@ -34,10 +31,6 @@ public class Ngram implements Serializable {
         sb.append(c).append(' ');
         n++;
         return true;
-    }
-
-    public Ngram getSubGram() { // markov assumption
-        return new Ngram(subGram);
     }
 
     public int n() {

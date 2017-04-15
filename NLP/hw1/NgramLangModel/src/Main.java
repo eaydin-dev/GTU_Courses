@@ -1,5 +1,4 @@
 import javafx.util.Pair;
-import ngram.Ngram;
 import ngram.Ngrams;
 import utils.ReadFile;
 import utils.Serialization;
@@ -8,6 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
@@ -16,7 +16,7 @@ public class Main {
     final static String TEST_PATH = "test";
     final static int MAX_NGRAMS = 5;
 
-    final static boolean DEBUG = true;
+    final static boolean DEBUG = false;
 
     public static void main(String[] args) {
         Ngrams ngrams;
@@ -28,30 +28,64 @@ public class Main {
             test = pair.getValue();
         }
         else {
-            System.out.println("Loading model file.");
+            System.out.println("> Loading model file.");
             ngrams = (Ngrams) Serialization.readObject(MODEL_PATH);
             test = (String) Serialization.readObject(TEST_PATH);
             System.out.println("> Model reading done.\n");
         }
 
         if (!DEBUG) {
-            PerplexityCalculator pc = new PerplexityCalculator();
+            LanguageModel model = new LanguageModel(ngrams);
             String sent = "Hava çok güzel";
-            int n = 2;
-            double res = pc.getPerplexity(sent, n, ngrams);
-            System.out.println("Sentence: " + sent);
-            System.out.println("Perplexity with ngram with n=" + n + ": " + res);
+            Scanner scanner = new Scanner(System.in);
+            boolean useInterpolation = false;
+            int n = -1;
+            double res = -1;
+            String t;
+
+            boolean end = false;
+            while (!end) {
+                System.out.print("Use interpolation: ");
+                t = scanner.next();
+                useInterpolation = t.equals("Y")||t.equals("y");
+
+                if (!useInterpolation) {
+                    System.out.print("N-gram: ");
+                    n = scanner.nextInt();
+                }
+
+                System.out.print("Enter sentence: ");
+                sent = scanner.next();
+
+                if (useInterpolation)
+                    res = model.getProbOfSentenceInterpolation(sent);
+                else
+                    res = model.getProbOfSentenceChain(sent, n);
+
+                System.out.println("The probability of the sentence is: " + res + "\n\n");
+            }
         }
 
         else {  // DEBUG
-            PerplexityCalculator pc = new PerplexityCalculator();
-            String sent = "Hava çok güzel.";
-            System.out.println("> " + pc.getProbOfSentence(sent, 4, ngrams));
-//            double r1 = pc.getProbOfSentence(sent, 1, ngrams);
-//            double r2 = pc.getProbOfSentence(sent, 2, ngrams);
-//            double r3 = pc.getProbOfSentence(sent, 3, ngrams);
-//            double r4 = pc.getProbOfSentence(sent, 4, ngrams);
-//            double r5 = pc.getProbOfSentence(sent, 5, ngrams);
+            LanguageModel model = new LanguageModel(ngrams);
+            String sent = "Şam'ın batısında rejim kuşatmasındaki Madaya beldesinden 2 bin 200 ve Zebadani ilçesinden 150 askeri muhalif ve sivilin bindirildiği otobüsler, dün sabah erken saatlerde hareket etmişti.";
+            sent = "ali ata bak";
+            System.out.println(model.getPerplexityInterpolationReport(test));
+//            System.out.println("> " + model.getProbOfSentenceChain(sent, 1));
+//            System.out.println("> " + model.getProbOfSentenceChain(sent, 2));
+//            System.out.println("> " + model.getProbOfSentenceChain(sent, 3));
+//            System.out.println("> " + model.getProbOfSentenceChain(sent, 4));
+//            System.out.println("> " + model.getProbOfSentenceChain(sent, 5));
+//
+//            System.out.println("> " + model.getProbOfSentenceInterpolation(sent));
+//
+//            System.out.println();
+//            System.out.println();
+//            double r1 = pc.getProbOfSentenceChain(sent, 1, ngrams);
+//            double r2 = pc.getProbOfSentenceChain(sent, 2, ngrams);
+//            double r3 = pc.getProbOfSentenceChain(sent, 3, ngrams);
+//            double r4 = pc.getProbOfSentenceChain(sent, 4, ngrams);
+//            double r5 = pc.getProbOfSentenceChain(sent, 5, ngrams);
 //
 //            System.out.println("r1: " + r1);
 //            System.out.println("r2: " + r2);
@@ -70,22 +104,21 @@ public class Main {
 
 
     public static String step2And3(Ngrams ngrams, String test) {
-        PerplexityCalculator calc = new PerplexityCalculator();
+        LanguageModel model = new LanguageModel(ngrams);
         System.out.println("> Calculating perplexities.");
-        List<Double> perplexities = new ArrayList<>();
+        List<String> perplexities = new ArrayList<>();
 
-        for (int j = 1; j < 5; j++) {
-            Double perp = calc.getPerplexity(test, j+1, ngrams);
+        for (int j = 0; j < 5; j++) {
             //System.err.println("> " + String.format("%.9f", newSent) + " (n=" + j + ")");
-            perplexities.add(perp);
+            perplexities.add(model.getPerplexityChainReport(test, j+1));
         }
 
         System.out.println("> Job done. Creating report.");
         StringBuilder report = new StringBuilder("\nPerplexity Results\n");
 
         int n = 1;
-        for (Double sum : perplexities)
-            report.append(String.format("n=%d -> ", (n++))).append(String.format("%.8f", sum)).append("\n");
+        for (String perp : perplexities)
+            report.append(perp).append("\n");
         report.append("\n\n");
 
         return report.toString();
