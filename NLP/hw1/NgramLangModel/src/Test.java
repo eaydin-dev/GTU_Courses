@@ -1,27 +1,24 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Test {
 
     public static void main(String[] args) {
 
-        int[][] arr = {
-                {1, 2, 3, 4},
-                {5, 6, 7, 8},
-                {9, 5, 4, 7}};
+        List<String> res = getNgrams("abcdef", 3);
+        System.out.println(res);
+    }
 
-        int n = 3;
-        int m = 4;
+    public static List<String> getNgrams(String str, int n)
+    {
+        List<String> ngrams = new ArrayList<>();
 
-        System.out.println("[ ");
-        String s = "";
-        for (int i = 0; i < n; i++) {
-            s = "  ";
-            for (int j = 0; j < m; j++) {
-                s += (String.format("%3d", arr[i][j] ) + " ");
-            }
-            System.out.println(s);
+        int c;
+        for (int i = 0; i < str.length() - n + 1; i++) {
+            String sub = str.substring(i, i+n);
+            ngrams.add(sub);
         }
-        for (int j = 0; j < s.length(); j++) {
-            System.out.print(" ");
-        }
-        System.out.print("  ]");
+
+        return ngrams;
     }
 }

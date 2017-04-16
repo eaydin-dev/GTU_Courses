@@ -1,13 +1,14 @@
 import javafx.util.Pair;
-import ngram.Ngrams;
 import utils.ReadFile;
 import utils.Serialization;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
 
 public class Main {
 
@@ -16,13 +17,17 @@ public class Main {
     final static String TEST_PATH = "test";
     final static int MAX_NGRAMS = 5;
 
-    final static boolean DEBUG = false;
+    static boolean DEBUG = false;
 
     public static void main(String[] args) {
+        if (args.length != 0) {
+            DEBUG = args[0].equals("-d");
+        }
+
         Ngrams ngrams;
         String test;
         if (!(new File(MODEL_PATH).exists())) {
-            System.out.println("Model file couldn't found. Training again.");
+            System.out.println("> Model file couldn't found. Training again.");
             Pair<Ngrams, String> pair = trainNgramModel();
             ngrams = pair.getKey();
             test = pair.getValue();
@@ -31,87 +36,84 @@ public class Main {
             System.out.println("> Loading model file.");
             ngrams = (Ngrams) Serialization.readObject(MODEL_PATH);
             test = (String) Serialization.readObject(TEST_PATH);
-            System.out.println("> Model reading done.\n");
+            System.out.println("> Model reading done.");
         }
 
         if (!DEBUG) {
             LanguageModel model = new LanguageModel(ngrams);
             String sent = "Hava çok güzel";
-            Scanner scanner = new Scanner(System.in);
-            boolean useInterpolation = false;
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            boolean useInterpolation;
             int n = -1;
             double res = -1;
             String t;
 
             boolean end = false;
-            while (!end) {
-                System.out.print("Use interpolation: ");
-                t = scanner.next();
-                useInterpolation = t.equals("Y")||t.equals("y");
+            try {
+                while (!end) {
+                    System.out.print("\nUse interpolation: ");
+                    t = br.readLine().trim();
+                    useInterpolation = t.equals("Y")||t.equals("y");
 
-                if (!useInterpolation) {
-                    System.out.print("N-gram: ");
-                    n = scanner.nextInt();
+                    if (!useInterpolation) {
+                        System.out.print("N-gram: ");
+                        n = Integer.parseInt(br.readLine().trim());
+                    }
+
+                    System.out.print("Enter sentence: ");
+                    sent = br.readLine();
+
+                    if (useInterpolation)
+                        res = model.getProbInterpolation(sent);
+                    else
+                        res = model.getProbChain(sent, n);
+
+                    System.out.println("The probability of the sentence is: " + res + "\n");
+
+                    System.out.print("Continue? > ");
+                    t = br.readLine().trim();
+                    if (!(t.equals("Y")||t.equals("y")))
+                        end = true;
                 }
-
-                System.out.print("Enter sentence: ");
-                sent = scanner.next();
-
-                if (useInterpolation)
-                    res = model.getProbOfSentenceInterpolation(sent);
-                else
-                    res = model.getProbOfSentenceChain(sent, n);
-
-                System.out.println("The probability of the sentence is: " + res + "\n\n");
+            } catch (IOException ex) {
+                System.err.println("IO Error");
+                ex.printStackTrace();
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         else {  // DEBUG
             LanguageModel model = new LanguageModel(ngrams);
             String sent = "Şam'ın batısında rejim kuşatmasındaki Madaya beldesinden 2 bin 200 ve Zebadani ilçesinden 150 askeri muhalif ve sivilin bindirildiği otobüsler, dün sabah erken saatlerde hareket etmişti.";
-            sent = "ali ata bak";
-            System.out.println(model.getPerplexityInterpolationReport(test));
-//            System.out.println("> " + model.getProbOfSentenceChain(sent, 1));
-//            System.out.println("> " + model.getProbOfSentenceChain(sent, 2));
-//            System.out.println("> " + model.getProbOfSentenceChain(sent, 3));
-//            System.out.println("> " + model.getProbOfSentenceChain(sent, 4));
-//            System.out.println("> " + model.getProbOfSentenceChain(sent, 5));
-//
-//            System.out.println("> " + model.getProbOfSentenceInterpolation(sent));
-//
-//            System.out.println();
-//            System.out.println();
-//            double r1 = pc.getProbOfSentenceChain(sent, 1, ngrams);
-//            double r2 = pc.getProbOfSentenceChain(sent, 2, ngrams);
-//            double r3 = pc.getProbOfSentenceChain(sent, 3, ngrams);
-//            double r4 = pc.getProbOfSentenceChain(sent, 4, ngrams);
-//            double r5 = pc.getProbOfSentenceChain(sent, 5, ngrams);
-//
-//            System.out.println("r1: " + r1);
-//            System.out.println("r2: " + r2);
-//            System.out.println("r3: " + r3);
-//            System.out.println("r4: " + r4);
-//            System.out.println("r5: " + r5);
+            //sent = "ali ata bak";
 
-//            String report = step2And3(ngrams, test);
-//            System.out.println(report);
+            System.out.println("Sample sentence: " + sent);
+            System.out.println("> " + model.getProbChain(sent, 1));
+            System.out.println("> " + model.getProbChain(sent, 2));
+            System.out.println("> " + model.getProbChain(sent, 3));
+            System.out.println("> " + model.getProbChain(sent, 4));
+            System.out.println("> " + model.getProbChain(sent, 5));
+
+            System.out.println("\n> " + model.getProbInterpolation(sent));
+
+
+            String report = testPerplexities(ngrams, test);
+            System.out.println("\n" + report);
         }
     }
 
-    private static Double log2(double num) {
-        return Math.log(num) / Math.log(2);
-    }
-
-
-    public static String step2And3(Ngrams ngrams, String test) {
+    public static String testPerplexities(Ngrams ngrams, String test) {
         LanguageModel model = new LanguageModel(ngrams);
         System.out.println("> Calculating perplexities.");
         List<String> perplexities = new ArrayList<>();
 
-        for (int j = 0; j < 5; j++) {
-            //System.err.println("> " + String.format("%.9f", newSent) + " (n=" + j + ")");
+        for (int j = 0; j < 5; j++)
             perplexities.add(model.getPerplexityChainReport(test, j+1));
-        }
 
         System.out.println("> Job done. Creating report.");
         StringBuilder report = new StringBuilder("\nPerplexity Results\n");
@@ -119,8 +121,8 @@ public class Main {
         int n = 1;
         for (String perp : perplexities)
             report.append(perp).append("\n");
-        report.append("\n\n");
 
+        report.append("\n").append(model.getPerplexityInterpolationReport(test)).append("\n");
         return report.toString();
     }
 
@@ -135,10 +137,10 @@ public class Main {
         int testSize = (files.size() * 5 / 100) + 1;
         int i;
         for (i = 0; i < testSize; i++)
-            sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll(" ", ""));
+            sbTest.append(ReadFile.readFileAsSingleString(files.get(i))/*.replaceAll("\\s+", "")*/);
 
         for (; i < files.size(); i++)
-            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll(" ", ""));
+            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i))/*.replaceAll("\\s+", "")*/);
 
         System.out.println("> Splitting complete. Training length: " + sbTrain.length() + ", Test length: " + sbTest.length());
         System.out.println("> Computing ngrams with training set.");
