@@ -26,7 +26,7 @@ public final class ReadFile {
         assert file != null : "Path cannot be null.";
 
         List<String> lines = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(file.toPath(), Charset.forName("ISO-8859-9"))) {
+        try (Stream<String> stream = Files.lines(file.toPath(), Charset.forName("WINDOWS-1254"))) {
             stream.forEach(lines::add);
         } catch (IOException ex) {
             System.err.println("File not found.");

@@ -9,6 +9,7 @@ public class Ngrams implements Serializable {
     private transient Map<String, Integer> ngrams = null;
     private Map<String, Double> probabilities = null;
     private List<Integer> counts = null;
+    private static int c = 0;
 
     public Ngrams(String str, int n) {
         ngrams = new HashMap<>();
@@ -32,7 +33,7 @@ public class Ngrams implements Serializable {
         if (probabilities.containsKey(ngram))
             return probabilities.get(ngram);
         else  {
-            //System.err.println("> '" + ngram + "'");
+            System.err.println("> '" + ngram + "'" + ", " + (c++));
             return 1.0 / getTotalNgramsFor(ngram.length());
         }
     }

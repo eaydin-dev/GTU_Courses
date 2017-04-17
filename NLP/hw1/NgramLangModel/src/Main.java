@@ -17,7 +17,7 @@ public class Main {
     final static String TEST_PATH = "test";
     final static int MAX_NGRAMS = 5;
 
-    static boolean DEBUG = false;
+    static boolean DEBUG = true;
 
     public static void main(String[] args) {
         if (args.length != 0) {
@@ -88,7 +88,7 @@ public class Main {
         }
 
         else {  // DEBUG
-            LanguageModel model = new LanguageModel(ngrams);
+            /*LanguageModel model = new LanguageModel(ngrams);
             String sent = "Şam'ın batısında rejim kuşatmasındaki Madaya beldesinden 2 bin 200 ve Zebadani ilçesinden 150 askeri muhalif ve sivilin bindirildiği otobüsler, dün sabah erken saatlerde hareket etmişti.";
             //sent = "ali ata bak";
 
@@ -99,7 +99,7 @@ public class Main {
             System.out.println("> " + model.getProbChain(sent, 4));
             System.out.println("> " + model.getProbChain(sent, 5));
 
-            System.out.println("\n> " + model.getProbInterpolation(sent));
+            System.out.println("\n> " + model.getProbInterpolation(sent));*/
 
 
             String report = testPerplexities(ngrams, test);
@@ -136,11 +136,13 @@ public class Main {
         Collections.shuffle(files);
         int testSize = (files.size() * 5 / 100) + 1;
         int i;
+        // sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[\\'\\\"\\^\\+\\-\\*\\/\\?\\:\\;\\(\\)\\[\\]\\,]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
+
         for (i = 0; i < testSize; i++)
-            sbTest.append(ReadFile.readFileAsSingleString(files.get(i))/*.replaceAll("\\s+", "")*/);
+            sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[^a-zA-Z ]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
 
         for (; i < files.size(); i++)
-            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i))/*.replaceAll("\\s+", "")*/);
+            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[^a-zA-Z ]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
 
         System.out.println("> Splitting complete. Training length: " + sbTrain.length() + ", Test length: " + sbTest.length());
         System.out.println("> Computing ngrams with training set.");
