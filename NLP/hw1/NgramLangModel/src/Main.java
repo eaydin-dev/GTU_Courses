@@ -6,9 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Main {
 
@@ -17,7 +15,7 @@ public class Main {
     final static String TEST_PATH = "test";
     final static int MAX_NGRAMS = 5;
 
-    static boolean DEBUG = true;
+    static boolean DEBUG = false;
 
     public static void main(String[] args) {
         if (args.length != 0) {
@@ -61,7 +59,7 @@ public class Main {
                     }
 
                     System.out.print("Enter sentence: ");
-                    sent = br.readLine();
+                    sent = br.readLine().toLowerCase().replaceAll("\\s{2,}", " ").trim();
 
                     if (useInterpolation)
                         res = model.getProbInterpolation(sent);
@@ -88,20 +86,18 @@ public class Main {
         }
 
         else {  // DEBUG
-            /*LanguageModel model = new LanguageModel(ngrams);
-            String sent = "Şam'ın batısında rejim kuşatmasındaki Madaya beldesinden 2 bin 200 ve Zebadani ilçesinden 150 askeri muhalif ve sivilin bindirildiği otobüsler, dün sabah erken saatlerde hareket etmişti.";
-            //sent = "ali ata bak";
+            for (int i = 1; i <= 5; i++) {
+                int counter = 0;
+                Map<String, Integer> grams = getNgrams(test, i);
+                for (String gram : grams.keySet()) {
+                    if (!ngrams.probabilities.containsKey(gram))
+                        ++counter;
+                }
 
-            System.out.println("Sample sentence: " + sent);
-            System.out.println("> " + model.getProbChain(sent, 1));
-            System.out.println("> " + model.getProbChain(sent, 2));
-            System.out.println("> " + model.getProbChain(sent, 3));
-            System.out.println("> " + model.getProbChain(sent, 4));
-            System.out.println("> " + model.getProbChain(sent, 5));
+                System.out.println(String.format("> For n=%d, there are %d ngrams that seen first time.", i, counter));
+            }
 
-            System.out.println("\n> " + model.getProbInterpolation(sent));*/
-
-
+            System.out.println();
             String report = testPerplexities(ngrams, test);
             System.out.println("\n" + report);
         }
@@ -126,6 +122,17 @@ public class Main {
         return report.toString();
     }
 
+    private static Map<String, Integer> getNgrams(String str, int n) {
+        Map<String, Integer> ngrams = new HashMap<>();
+
+        for (int i = 0; i < str.length() - n + 1; i++) {
+            String sub = str.substring(i, i + n);
+            ngrams.merge(sub, 1, (a, b) -> a + b);
+        }
+
+        return ngrams;
+    }
+
     public static Pair<Ngrams, String> trainNgramModel() {
         System.out.println("> Splitting data.");
         List<File> files = new ArrayList<>();
@@ -136,13 +143,11 @@ public class Main {
         Collections.shuffle(files);
         int testSize = (files.size() * 5 / 100) + 1;
         int i;
-        // sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[\\'\\\"\\^\\+\\-\\*\\/\\?\\:\\;\\(\\)\\[\\]\\,]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
-
         for (i = 0; i < testSize; i++)
-            sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[^a-zA-Z ]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
+            sbTest.append(ReadFile.readFileAsSingleString(files.get(i)).toLowerCase().replaceAll("\\s{2,}", " ").trim());
 
         for (; i < files.size(); i++)
-            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i)).replaceAll("[^a-zA-Z ]", "").toLowerCase().replaceAll("\\s{2,}", " ").trim());
+            sbTrain.append(ReadFile.readFileAsSingleString(files.get(i)).toLowerCase().replaceAll("\\s{2,}", " ").trim());
 
         System.out.println("> Splitting complete. Training length: " + sbTrain.length() + ", Test length: " + sbTest.length());
         System.out.println("> Computing ngrams with training set.");
