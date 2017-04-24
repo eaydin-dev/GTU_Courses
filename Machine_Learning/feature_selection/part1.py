@@ -7,53 +7,52 @@ o Pick up a dataset for classification (should be a classification task with fea
 o Report which set of features results in the best performance. The best performance is considered in terms of accuracy. 
 10-fold cross validation should be used.
 
-data used: https://archive.ics.uci.edu/ml/datasets/Contraceptive+Method+Choice
+data used: https://archive.ics.uci.edu/ml/datasets/Fertility
 
 
 """
 
-from sklearn import preprocessing
-from sklearn.model_selection import cross_val_score
-from sklearn.tree import DecisionTreeClassifier
-import sklearn.svm
-from sklearn import linear_model
+import itertools
+from datetime import datetime
 
 import numpy as np
+import sklearn.svm
+from sklearn.model_selection import cross_val_score
 
+import prepare_data
 
-def load_data(path):
-    file_ptr = open(path, "r")
-    text = file_ptr.read()
-    rows = text.splitlines()
+start = datetime.now()
+data, target = prepare_data.get('fertility.data')
 
-    result = []
-    for row in rows:
-        values = row.split(',')
-        l = [int(values[0]), values[1], values[2], int(values[3]), values[4], values[5], values[6], values[7],
-             values[8], values[9]]
-        result.append(np.asarray(l))
+classifier = sklearn.svm.SVC()
 
-    file_ptr.close()
-    return result
-
-
-raw_data = load_data('contraceptive_methods.data')
-print "data size:", len(raw_data), "dims:", len(raw_data[0])
-
-data = []
-target = []
-le = preprocessing.LabelEncoder()
-
-for row in raw_data:
-    data.append(le.fit_transform(row[:len(row) - 1]))
-    target.append(row[len(row) - 1])
-
-# classifier = sklearn.svm.SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-#     decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-#     max_iter=-1, probability=False, random_state=None, shrinking=True,
-#     tol=0.001, verbose=False)
-
-classifier = sklearn.multiclass.OneVsRestClassifier(sklearn.svm.SVC())
-#classifier.fit(data, target)
+print 'Original classification result:'
 res = cross_val_score(classifier, data, target, cv=10)
-print (res)
+print res
+print 'Mean:', np.mean(res), '\n'
+
+combinations = []
+transposed = data.T
+
+for i in range(1, len(data[0])):
+    for sub in itertools.combinations(range(0, len(data[0])), len(data[0])-i):
+        combinations.append(np.array(sub))
+
+results = []
+for i in range(1, len(data[0])):
+    print 'progress:', i, 'in', len(data[0])-1
+    subs = []
+    for sub in itertools.combinations(transposed, len(transposed)-i):
+        subs.append(np.array(sub))
+    for d in subs:
+        res = cross_val_score(classifier, d.T, target, cv=10)
+        results.append(np.mean(res))
+
+print 'time:', datetime.now()-start, '\n'
+res_str = []
+for i in range(0, len(results)):
+    res_str.append(str(results[i]) + ' for ' + str(combinations[i]))
+
+res_str.sort()
+print 'Result:', res_str[len(res_str)-1]
+
