@@ -1,5 +1,4 @@
 import utils.ReadFile;
-import utils.Serialization;
 
 import java.io.File;
 import java.util.*;
@@ -21,11 +20,6 @@ public class TextCategorizator {
 
         for (File file : trainingFiles.keySet()) {
             String content = ReadFile.readFileAsSingleString(file);
-
-            // replace all non-letter chars and reduce multiple spaces to one.
-            content = content.replaceAll("[^a-zA-Z\\s]", "")
-                    .replaceAll("\\s+", " ");
-
             String[] tokens = content.split("\\s+");
 
             // get only the first 5 chars of word
@@ -39,7 +33,6 @@ public class TextCategorizator {
 
         words = new ArrayList<>(set);
     }
-
 
     @Override
     public String toString() {

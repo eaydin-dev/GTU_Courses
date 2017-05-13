@@ -12,7 +12,6 @@ public class Main {
     private static Map<File, String> trainingFiles = new HashMap<>();
     private static Map<File, String> testFiles = new HashMap<>();
 
-
     public static void main(String[] args) {
         Map<File, String> files = new HashMap<>();
         getAllPaths(new File(DATA_PATH), files);
@@ -37,7 +36,6 @@ public class Main {
     }
 
     private static void getAllPaths(File root, Map<File, String> fileCategoryMap) {
-
         if (!root.exists())
             throw new IllegalArgumentException("No file: " + root.getAbsolutePath());
 
