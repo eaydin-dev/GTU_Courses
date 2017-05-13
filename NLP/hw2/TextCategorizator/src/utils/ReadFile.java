@@ -38,7 +38,6 @@ public final class ReadFile {
         return lines;
     }
 
-
     public static String readFileAsSingleString(File path){
         List<String> lines = readFileAsList(path);
         StringBuilder sb = new StringBuilder();
@@ -49,6 +48,11 @@ public final class ReadFile {
         // replace all non-letter chars and reduce multiple spaces to one.
         return sb.toString().replaceAll("[^a-zA-Z\\s]", "")
                 .replaceAll("\\s+", " ");
+    }
+
+    public static String[] readWords(File path) {
+        String content = readFileAsSingleString(path);
+        return content.split("\\s+");
     }
 
 }

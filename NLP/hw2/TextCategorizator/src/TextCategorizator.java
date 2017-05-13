@@ -19,8 +19,7 @@ public class TextCategorizator {
         Set<String> set = new HashSet<>();
 
         for (File file : trainingFiles.keySet()) {
-            String content = ReadFile.readFileAsSingleString(file);
-            String[] tokens = content.split("\\s+");
+            String[] tokens = ReadFile.readWords(file);
 
             // get only the first 5 chars of word
             for (int i = 0; i < tokens.length; i++) {
@@ -32,6 +31,24 @@ public class TextCategorizator {
         }
 
         words = new ArrayList<>(set);
+    }
+
+    /**
+     * Calculates the term-frequency of the term in file.
+     * @param term
+     * @param file
+     * @return
+     */
+    private int tf(String term, File file) {
+        term = term.trim();
+
+        String[] words = ReadFile.readWords(file);
+        int counter = 0;
+        for (String word : words)
+            if (word.equals(term))
+                ++counter;
+
+        return counter;
     }
 
     @Override
