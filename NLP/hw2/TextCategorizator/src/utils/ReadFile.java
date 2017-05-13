@@ -38,6 +38,11 @@ public final class ReadFile {
         return lines;
     }
 
+    /**
+     * Reads file lines, combines them while replacing all non-letter chars.
+     * @param path
+     * @return
+     */
     public static String readFileAsSingleString(File path){
         List<String> lines = readFileAsList(path);
         StringBuilder sb = new StringBuilder();
@@ -50,6 +55,11 @@ public final class ReadFile {
                 .replaceAll("\\s+", " ");
     }
 
+    /**
+     * Reads file as a single string, and than splits words.
+     * @param path
+     * @return
+     */
     public static String[] readWords(File path) {
         String content = readFileAsSingleString(path);
         return content.split("\\s+");
