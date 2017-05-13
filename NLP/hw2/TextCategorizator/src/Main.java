@@ -2,31 +2,33 @@ import utils.ReadFile;
 import utils.Serialization;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Main {
 
     public static final String DATA_PATH = "C:\\Users\\EA\\Desktop\\raw_texts\\";
     private static final String MODEL_PATH = "tc.model";
     private static final String TEST_PATH = "tc.test";
-    private static List<File> trainingFiles = new ArrayList<>();
-    private static List<File> testFiles = new ArrayList<>();
+    private static Map<File, String> trainingFiles = new HashMap<>();
+    private static Map<File, String> testFiles = new HashMap<>();
 
 
     public static void main(String[] args) {
-
-        List<File> files = new ArrayList<>();
+        Map<File, String> files = new HashMap<>();
         getAllPaths(new File(DATA_PATH), files);
-        Collections.shuffle(files);
+        List<Map.Entry<File, String>> data = new ArrayList<>(files.entrySet());
+        Collections.shuffle(data);
+
         int testSize = (files.size() * 5 / 100) + 1;
         int i;
-        for (i = 0; i < testSize; ++i)
-            testFiles.add(files.get(i));
-        for (; i < files.size(); ++i)
-            trainingFiles.add(files.get(i));
-
+        for (i = 0; i < testSize; ++i){
+            Map.Entry<File, String> sample = data.get(i);
+            testFiles.put(sample.getKey(), sample.getValue());
+        }
+        for (; i < files.size(); ++i){
+            Map.Entry<File, String> sample = data.get(i);
+            trainingFiles.put(sample.getKey(), sample.getValue());
+        }
 
         TextCategorizator tc = new TextCategorizator();
         tc.trainModel(trainingFiles);
@@ -34,7 +36,7 @@ public class Main {
         System.out.println(tc);
     }
 
-    private static void getAllPaths(File root, List<File> list) {
+    private static void getAllPaths(File root, Map<File, String> fileCategoryMap) {
 
         if (!root.exists())
             throw new IllegalArgumentException("No file: " + root.getAbsolutePath());
@@ -45,10 +47,11 @@ public class Main {
 
             for (File child : children) {
                 if (child.isDirectory())
-                    getAllPaths(child, list);
+                    getAllPaths(child, fileCategoryMap);
                 else
-                    list.add(child);
+                    fileCategoryMap.put(child, root.getName());
             }
         }
     }
+
 }
