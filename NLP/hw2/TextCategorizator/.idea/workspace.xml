@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8348f558-aedf-4304-92b1-81f839d9f98f" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/utils/ReadFile.java" afterPath="$PROJECT_DIR$/src/utils/ReadFile.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TextCategorizator.java" afterPath="$PROJECT_DIR$/src/TextCategorizator.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -30,12 +31,22 @@
       <file leaf-file-name="TextCategorizator.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/TextCategorizator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="423">
-              <caret line="49" column="0" lean-forward="true" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
+            <state relative-caret-position="188">
+              <caret line="15" column="5" lean-forward="false" selection-start-line="15" selection-start-column="5" selection-end-line="15" selection-end-column="5" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="docComment;method#getWords#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#getWords#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="docComment;method#tfidf#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#tfidf#0;class#TextCategorizator#0" expanded="false" />
                 <element signature="docComment;method#tf#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#tf#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="docComment;method#idf#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#idf#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="docComment;method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="docComment;method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
+                <element signature="method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -74,9 +85,9 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/TextCategorizator.java" />
         <option value="$PROJECT_DIR$/src/Main.java" />
         <option value="$PROJECT_DIR$/src/utils/ReadFile.java" />
+        <option value="$PROJECT_DIR$/src/TextCategorizator.java" />
       </list>
     </option>
   </component>
@@ -605,12 +616,12 @@
       <updated>1494522387750</updated>
       <workItem from="1494522394034" duration="3302000" />
       <workItem from="1494589081487" duration="56000" />
-      <workItem from="1494693458806" duration="1880000" />
+      <workItem from="1494693458806" duration="2907000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="5238000" />
+    <option name="totallyTimeSpent" value="6265000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
@@ -654,7 +665,9 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager />
+    <breakpoint-manager>
+      <option name="time" value="1" />
+    </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="antWorkspaceConfiguration">
@@ -690,7 +703,17 @@
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="docComment;method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#tfidf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tfidf#0;class#TextCategorizator#0" expanded="false" />
             <element signature="docComment;method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -723,7 +746,17 @@
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="docComment;method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#tfidf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tfidf#0;class#TextCategorizator#0" expanded="false" />
             <element signature="docComment;method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -758,12 +791,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/TextCategorizator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="423">
-          <caret line="49" column="0" lean-forward="true" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
+        <state relative-caret-position="188">
+          <caret line="15" column="5" lean-forward="false" selection-start-line="15" selection-start-column="5" selection-end-line="15" selection-end-column="5" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="docComment;method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#getWords#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#tfidf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tfidf#0;class#TextCategorizator#0" expanded="false" />
             <element signature="docComment;method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#tf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#idf#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#containsTerm#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="docComment;method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
+            <element signature="method#calculateIdfs#0;class#TextCategorizator#0" expanded="false" />
           </folding>
         </state>
       </provider>
