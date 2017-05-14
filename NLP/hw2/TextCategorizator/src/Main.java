@@ -9,7 +9,7 @@ import java.util.*;
 
 public class Main {
 
-    private static final String DATA_PATH = "C:\\Users\\EA\\Desktop\\raw_texts\\";
+    private static final String DATA_PATH = "C:\\Users\\EA\\Desktop\\sample\\";
     private static final String MODEL_PATH = "tc.model";
     private static final String TEST_PATH = "tc.test";
 

@@ -14,17 +14,21 @@ import java.util.stream.Collectors;
 
 public class TextCategorizator implements Serializable{
 
-    private transient List<String> terms = null;
-    private Map<File, String> trainingFiles;
-    private transient Map<String, Double> idfs;
-    private Map<File, double[]> tfidfMap;
-    private Set<String> classes;
+    private List<String> terms = null;
+    private Map<File, String> trainingFiles = null;
+    private Map<String, Double> idfs = null;
+    private Map<File, double[]> tfidfMap = null;
+    private Set<String> classes = null;
+
+    transient private Map<File, int[]> histogramMap = null;
 
     public void trainModel(Map<File, String> trainingFiles, String outputModel) {
 
         this.trainingFiles = trainingFiles;
         System.out.println("> Getting words.");
         getWords();
+        System.out.println("> Calculating histograms");
+        getTermHistograms();
         System.out.println("> Calculating idfs.");
         calculateIdfs();
         tfidfMap = new HashMap<>();
@@ -32,7 +36,7 @@ public class TextCategorizator implements Serializable{
 
         int c = 1, size = trainingFiles.size();
         for (Map.Entry<File, String> entry : trainingFiles.entrySet()) {
-            System.out.println(String.format("%3d/%d -> %s", (c++), size, entry.getKey().getName()));
+            System.out.println(String.format("Tfidf: %3d/%d -> %s", (c++), size, entry.getKey().getName()));
             tfidfMap.put(entry.getKey(), getTfidfVector(entry.getKey()));
             classes.add(entry.getValue());
         }
@@ -58,6 +62,44 @@ public class TextCategorizator implements Serializable{
         }
 
         return (new ArrayList<>(sortByValue(counts, false).keySet())).get(0);
+    }
+
+
+    private void getTermHistograms(){
+        histogramMap = new HashMap<>();
+
+        for (File file : trainingFiles.keySet()) {
+            String[] words = ReadFile.readWords(file);
+            int[] hist = getFreshArr(terms.size());
+            int index;
+            for (String term : words) {
+                index = terms.indexOf(term);
+                if (index != -1) {
+                    hist[index] += 1;
+                }
+            }
+
+            histogramMap.put(file, hist);
+        }
+    }
+
+    private int[] getFreshArr(int n) {
+        int[] arr = new int[n];
+        for (int i = 0; i < n; i++) {
+            arr[i] = 0;
+        }
+
+        return arr;
+    }
+
+    private int countTerms(String[] words, String term) {
+        int counter = 0;
+
+        for (String s : words)
+            if (s.equals(term))
+                ++counter;
+
+        return counter;
     }
 
     /**
@@ -169,14 +211,25 @@ public class TextCategorizator implements Serializable{
      */
     private int tf(String term, File file) {
         term = term.trim();
+        int[] hist;
 
-        String[] words = ReadFile.readWords(file);
-        int counter = 0;
-        for (String word : words)
-            if (word.equals(term))
-                ++counter;
+        if (histogramMap != null && (hist = histogramMap.get(file)) != null) {
+            int index = terms.indexOf(term);
+            if (index == -1)
+                return 0;
+            return hist[index];
+        }
 
-        return counter;
+        else {
+            String[] words = ReadFile.readWords(file);
+            int counter = 0;
+            for (String word : words)
+                if (word.equals(term))
+                    ++counter;
+
+            return counter;
+        }
+
     }
 
     /**
@@ -186,11 +239,12 @@ public class TextCategorizator implements Serializable{
      */
     private double idf(String term) {
         double containingFiles = 1; // smoothing
-        for (File file : trainingFiles.keySet()) {
-            if (containsTerm(term, file))
+        int index = terms.indexOf(term);
+
+        for (int[] hist : histogramMap.values()) {
+            if (hist[index] != 0)
                 ++containingFiles;
         }
-
         return Math.log(trainingFiles.size() / containingFiles);
     }
 
