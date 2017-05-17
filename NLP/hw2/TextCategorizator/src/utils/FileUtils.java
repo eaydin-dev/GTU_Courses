@@ -1,21 +1,26 @@
 package utils;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
  * static class to handle reading file.
  * Created by EA on 23.11.2016.
  */
-public final class ReadFile {
+public final class FileUtils {
 
-    private ReadFile() { }
+    private static final Pattern UNDESIRABLES = Pattern.compile("[]\\[(){},.;:!?<>%'‘’\"“”]");
+
+    private FileUtils() { }
 
     /**
      * uses Java 8 streams to read file lines.
@@ -50,9 +55,10 @@ public final class ReadFile {
         for (String line : lines)
             sb.append(line).append(" ");
 
+        return UNDESIRABLES.matcher(sb.toString()).replaceAll("");
         // replace all non-letter chars and reduce multiple spaces to one.
-        return sb.toString().replaceAll("[^a-zA-Z\\s]", "")
-                .replaceAll("\\s+", " ");
+//        return sb.toString().replaceAll("[^a-zA-Z\\s]", "")
+//                .replaceAll("\\s+", " ");
     }
 
     /**
@@ -61,8 +67,30 @@ public final class ReadFile {
      * @return
      */
     public static String[] readWords(File path) {
-        String content = readFileAsSingleString(path);
-        return content.split("\\s+");
+        String content = readFileAsSingleString(path).toLowerCase();
+        String[] tokens = content.split("\\s+");
+        List<String> temp = new ArrayList<>();
+        for (String token : tokens)
+            if (token.length() > 2)
+                temp.add(token);
+        String[] result = new String[temp.size()];
+        int i = 0;
+        for (String token : temp)
+            result[i++] = token;
+        return result;
     }
 
+
+    public static void printCollectionToTxt(Collection<String> list,
+                                            String outPath){
+        try {
+            FileWriter fw = new FileWriter(outPath);
+            for (String s : list)
+                fw.write(s + "\n");
+
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

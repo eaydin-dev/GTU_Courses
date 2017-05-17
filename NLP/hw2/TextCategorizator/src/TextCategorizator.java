@@ -1,32 +1,41 @@
-import utils.ReadFile;
+import utils.FileUtils;
 import utils.Serialization;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-
-/**
- * TODO: for idf, read each file while keeping the histogram of words for each file.
- * TODO: this way, for each term, the overhead of opening and reading all files will be eliminated
- */
 
 public class TextCategorizator implements Serializable{
 
     private List<String> terms = null;
     private Map<File, String> trainingFiles = null;
-    private Map<String, Double> idfs = null;
+
+    // file to tfidf vector
     private Map<File, double[]> tfidfMap = null;
+
+    // class names
     private Set<String> classes = null;
 
-    transient private Map<File, int[]> histogramMap = null;
+    // file to histogram map
+    private transient Map<File, int[]> histogramMap = null;
 
+    // term to idf map
+    private Map<String, Double> idfs = null;
+
+    /**
+     * Train the model with given files.
+     * @param trainingFiles
+     * @param outputModel
+     */
     public void trainModel(Map<File, String> trainingFiles, String outputModel) {
-
         this.trainingFiles = trainingFiles;
         System.out.println("> Getting words.");
         getWords();
+        System.out.println("# words: " + terms.size());
+        //FileUtils.printCollectionToTxt(terms, "terms.txt");
+
         System.out.println("> Calculating histograms");
         getTermHistograms();
         System.out.println("> Calculating idfs.");
@@ -34,24 +43,34 @@ public class TextCategorizator implements Serializable{
         tfidfMap = new HashMap<>();
         classes = new HashSet<>();
 
-        int c = 1, size = trainingFiles.size();
-        for (Map.Entry<File, String> entry : trainingFiles.entrySet()) {
-            System.out.println(String.format("Tfidf: %3d/%d -> %s", (c++), size, entry.getKey().getName()));
+        System.out.println("> Calculating tfidfs.");
+        trainingFiles.entrySet().parallelStream().forEach(entry -> {
             tfidfMap.put(entry.getKey(), getTfidfVector(entry.getKey()));
             classes.add(entry.getValue());
-        }
+        });
 
         if (outputModel != null)
             Serialization.writeObject(this, outputModel);
     }
 
-    public String classifyKnn(File file, int k) {
+    private void getCosineSimilarities(double[] givenVec, Map<File, Double> distances) {
+        tfidfMap.entrySet().parallelStream().forEach(entry -> {
+            distances.put(entry.getKey(),
+                    cosSimilarity(givenVec, entry.getValue()));
+        });
+    }
+
+    /**
+     * Classify a given file with knn.
+     * @param file
+     * @param k
+     * @return
+     */
+    public Map.Entry<String, Integer> classifyKnn(File file, int k) {
         double[] givenVec = getTfidfVector(file);
         Map<File, Double> distances = new HashMap<>();
-        for (Map.Entry<File, double[]> entry : tfidfMap.entrySet()) {
-            distances.put(entry.getKey(), cosSimilarity(givenVec, entry.getValue()));
-        }
 
+        getCosineSimilarities(givenVec, distances);
         distances = sortByValue(distances, true);
 
         List<File> sortedFiles = new ArrayList<>(distances.keySet());
@@ -61,45 +80,65 @@ public class TextCategorizator implements Serializable{
             counts.put(category, countClass(sortedFiles, category));
         }
 
-        return (new ArrayList<>(sortByValue(counts, false).keySet())).get(0);
+        ArrayList<Map.Entry<String, Integer>> resultList =
+                new ArrayList(sortByValue(counts, true).entrySet());
+
+        return resultList.get(0);
     }
 
+    /**
+     * Classify a given file with Rocchio.
+     * @param file
+     * @return
+     */
+    public Map.Entry<String, Double> classifyRocchio(File file) {
+        double[] givenVec = getTfidfVector(file);
+        Map<File, Double> distances = new HashMap<>();
+        for (Map.Entry<File, double[]> entry : tfidfMap.entrySet()) {
+            distances.put(entry.getKey(),
+                    cosSimilarity(givenVec, entry.getValue()));
+        }
 
+        distances = sortByValue(distances, true);
+        List<Map.Entry<File, Double>> sortedFiles =
+                new ArrayList<>(distances.entrySet());
+
+        return new AbstractMap.SimpleEntry<>
+                (trainingFiles.get(sortedFiles.get(0).getKey()),
+                sortedFiles.get(0).getValue());
+    }
+
+    /**
+     * Traverses all files and creates their term histogram.
+     */
     private void getTermHistograms(){
         histogramMap = new HashMap<>();
 
         for (File file : trainingFiles.keySet()) {
-            String[] words = ReadFile.readWords(file);
+            String[] words = FileUtils.readWords(file);
             int[] hist = getFreshArr(terms.size());
             int index;
             for (String term : words) {
                 index = terms.indexOf(term);
-                if (index != -1) {
-                    hist[index] += 1;
-                }
+                if (index != -1)
+                    hist[index]++;
             }
 
             histogramMap.put(file, hist);
         }
     }
 
+    /**
+     * Creates and initializes(with 0) an int array with length n.
+     * @param n
+     * @return
+     */
     private int[] getFreshArr(int n) {
         int[] arr = new int[n];
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++)
             arr[i] = 0;
-        }
 
         return arr;
-    }
-
-    private int countTerms(String[] words, String term) {
-        int counter = 0;
-
-        for (String s : words)
-            if (s.equals(term))
-                ++counter;
-
-        return counter;
     }
 
     /**
@@ -109,11 +148,13 @@ public class TextCategorizator implements Serializable{
      * @param <V>
      * @return
      */
-    private <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map, boolean reverse) {
-
+    private <K, V extends Comparable<? super V>> Map<K, V>
+        sortByValue(Map<K, V> map, boolean reverse) {
         return map.entrySet()
                 .stream()
-                .sorted((reverse ? Map.Entry.comparingByValue(Collections.reverseOrder()) : Map.Entry.comparingByValue()))
+                .sorted((reverse ?
+                        Map.Entry.comparingByValue(Collections.reverseOrder()) :
+                        Map.Entry.comparingByValue()))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
@@ -122,13 +163,18 @@ public class TextCategorizator implements Serializable{
                 ));
     }
 
+    /**
+     * Counts the number of class c in given files. (Using file to class map)
+     * @param files
+     * @param c
+     * @return
+     */
     private int countClass(List<File> files, String c) {
         int counter = 0;
         for (File file : files) {
             if (trainingFiles.get(file).equals(c))
                 ++counter;
         }
-
         return counter;
     }
 
@@ -136,21 +182,22 @@ public class TextCategorizator implements Serializable{
         return tfidfMap;
     }
 
+    /**
+     * Calculate cosine similarity of two vectors
+     * @param vec1
+     * @param vec2
+     * @return
+     */
     private double cosSimilarity(double[] vec1, double[] vec2) {
-        return dotProduct(vec1, vec2) / (Math.sqrt(norm(vec1)) * Math.sqrt(norm(vec2)));
-    }
-
-    private double norm(double[] vec) {
-        double norm = 0.0;
-        for (double aVec : vec) norm += Math.pow(aVec, 2);
-        return norm;
-    }
-
-    private double dotProduct(double[] vec1, double[] vec2) {
+        double norm1 = 0.0;
+        double norm2 = 0.0;
         double dotProduct = 0.0;
-        for (int i = 0; i < vec1.length; i++)
+        for (int i = 0; i < vec1.length; i++) {
+            norm1 += Math.pow(vec1[i], 2);
+            norm2 += Math.pow(vec2[i], 2);
             dotProduct += vec1[i] * vec2[i];
-        return dotProduct;
+        }
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
     }
 
     /**
@@ -160,9 +207,10 @@ public class TextCategorizator implements Serializable{
      */
     private double[] getTfidfVector(File file) {
         double[] tfidfs = new double[terms.size()];
-        int i = 0;
-        for (String term : terms)
-            tfidfs[i++] = tfidf(term, file);
+        AtomicInteger i = new AtomicInteger(0);
+        terms.parallelStream().forEach(term -> {
+            tfidfs[i.getAndIncrement()] = tfidf(term, file);
+        });
 
         return tfidfs;
     }
@@ -174,18 +222,20 @@ public class TextCategorizator implements Serializable{
         Set<String> set = new HashSet<>();
 
         for (File file : trainingFiles.keySet()) {
-            String[] tokens = ReadFile.readWords(file);
-
-            // get only the first 5 chars of word
-            for (int i = 0; i < tokens.length; i++) {
-                if (tokens[i].length() > 5)
-                    tokens[i] = tokens[i].substring(0, 5);
-            }
-
-            set.addAll(Arrays.asList(tokens));
+            String[] tokens = FileUtils.readWords(file);
+            getWords(Arrays.asList(tokens), set);
         }
 
         terms = new ArrayList<>(set);
+    }
+
+    private void getWords(List<String> tokens, Set<String> set) {
+        tokens.parallelStream().forEach(token -> {
+            // get only the first 5 chars of word
+            if (token.length() > 5)
+                token = token.substring(0, 5);
+            set.add(token);
+        });
     }
 
     /**
@@ -196,9 +246,14 @@ public class TextCategorizator implements Serializable{
      */
     private double tfidf(String term, File file) {
         int tf = tf(term, file);
-        Double idf = idfs.get(term);
-        if (idf == null)
-            idf = 1.0;
+        Double idf;
+        if (idfs != null) {
+            idf = idfs.get(term);
+            if (idf == null)
+                idf = 1.0;
+        }
+        else
+            idf = idf(term);
 
         return tf * idf;
     }
@@ -209,8 +264,7 @@ public class TextCategorizator implements Serializable{
      * @param file
      * @return
      */
-    private int tf(String term, File file) {
-        term = term.trim();
+    private int tf(final String term, File file) {
         int[] hist;
 
         if (histogramMap != null && (hist = histogramMap.get(file)) != null) {
@@ -221,15 +275,18 @@ public class TextCategorizator implements Serializable{
         }
 
         else {
-            String[] words = ReadFile.readWords(file);
-            int counter = 0;
-            for (String word : words)
-                if (word.equals(term))
-                    ++counter;
+            String[] words = FileUtils.readWords(file);
+            AtomicInteger counter = new AtomicInteger(0);
+            if (words.length > 100) {
+                List<String> list = Arrays.asList(words);
+                list.parallelStream().forEach(word -> {
+                    if (word.equals(term))
+                        counter.getAndIncrement();
+                });
+            }
 
-            return counter;
+            return counter.get();
         }
-
     }
 
     /**
@@ -238,29 +295,15 @@ public class TextCategorizator implements Serializable{
      * @return
      */
     private double idf(String term) {
-        double containingFiles = 1; // smoothing
+        AtomicInteger containingFiles = new AtomicInteger(1); // smoothing
         int index = terms.indexOf(term);
 
-        for (int[] hist : histogramMap.values()) {
+        histogramMap.values().parallelStream().forEach((int[] hist) -> {
             if (hist[index] != 0)
-                ++containingFiles;
-        }
-        return Math.log(trainingFiles.size() / containingFiles);
-    }
+                containingFiles.getAndIncrement();
+        });
 
-    /**
-     * Checks if the given file contains the term.
-     * @param term
-     * @param file
-     * @return
-     */
-    private boolean containsTerm(String term, File file) {
-        String[] words = ReadFile.readWords(file);
-        for (String word : words)
-            if (word.equals(term))
-                return true;
-
-        return false;
+        return Math.log((double) trainingFiles.size() / containingFiles.get());
     }
 
     /**
@@ -268,9 +311,9 @@ public class TextCategorizator implements Serializable{
      */
     private void calculateIdfs() {
         idfs = new HashMap<>();
-        for (String term : terms) {
+        terms.parallelStream().forEach(term -> {
             idfs.put(term, idf(term));
-        }
+        });
     }
 
     @Override
