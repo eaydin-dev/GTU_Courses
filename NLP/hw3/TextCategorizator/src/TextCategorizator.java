@@ -5,16 +5,17 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unchecked")
 public class TextCategorizator implements Serializable {
-    private Map<String, String> wordVectors;
-    private Map<File, List<List<Double>>> docVectors;
-    private Map<File, String> trainingFiles;
-    private Set<String> classes;
+    private Map<String, String> wordVectors = null;
+    private Map<File, List<List<Double>>> docVectors = null;
+    private Map<File, String> trainingFiles = null;
+    private Set<String> classes = null;
 
     public TextCategorizator(Map<File, String> trainingFiles, String trainedVectors) {
-        wordVectors = new HashMap<>();
-        docVectors = new HashMap<>();
-        classes = new HashSet<>();
+        wordVectors = Collections.synchronizedMap(new HashMap<>());
+        docVectors = Collections.synchronizedMap(new HashMap<>());
+        classes = Collections.synchronizedSet(new HashSet<>());
 
         this.trainingFiles = trainingFiles;
         List<String> lines = FileUtils.readFileAsList(new File(trainedVectors));

@@ -21,7 +21,8 @@ public class Main {
     private static Map<File, String> tests = null;
 
     public static void main(String[] args) throws IOException {
-        if (!(new File(MODEL_PATH).exists())) {
+        File f = new File(MODEL_PATH);
+        if (!f.exists()) {
             System.out.println("> Model file couldn't found. Training.");
             Map.Entry<TextCategorizator, Map<File, String>> e = trainModel();
 
@@ -30,6 +31,7 @@ public class Main {
         }
         else {
             System.out.println("> Loading model file.");
+
             model = (TextCategorizator) Serialization.readObject(MODEL_PATH);
             //if (DEBUG)
                 //tests = (Map<File, String>) Serialization.readObject(TEST_PATH);
@@ -119,6 +121,8 @@ public class Main {
             filePath = br.readLine().trim();
             file = new File(filePath);
             if (!(file.exists())) {
+                if (file.getName().equals("leave"))
+                    break;
                 System.out.println("File doesn't exist.");
                 continue;
             }
@@ -133,7 +137,6 @@ public class Main {
                 option = 3;
             else
                 option = 1;
-
 
             if (classificationMethod.equals("k")) {
                 System.out.print("Enter k: ");
@@ -161,7 +164,7 @@ public class Main {
     private static Map.Entry<TextCategorizator, Map<File, String>> trainModel() {
         long start = System.currentTimeMillis();
 
-        Map<File, String> trainingFiles = new HashMap<>();
+        Map<File, String> trainingFiles = Collections.synchronizedMap(new HashMap<>());
         Map<File, String> testFiles = new HashMap<>();
 
         Map<File, String> files = new HashMap<>();

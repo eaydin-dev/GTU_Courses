@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  */
 public final class FileUtils {
 
-    private static final Pattern UNDESIRABLES = Pattern.compile("[]\\[(){},.;:!?<>%'‘’\"“”]");
+    private static final Pattern UNDESIRABLES = Pattern.compile("[]\\[(){},.;:!?<>%'\"]");
 
     private FileUtils() { }
 
