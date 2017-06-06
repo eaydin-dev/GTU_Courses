@@ -12,8 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings("unchecked")
 public class Main {
 
-    private static final boolean DEBUG = false;
-    private static String DATA_PATH = "C:\\Users\\EA\\Desktop\\raw_texts\\";
+    private static boolean DEBUG = false;
+//    private static String VEC_PATH = "C:\\Users\\EA\\Desktop\\vec.txt";
+//    private static String DATA_PATH = "C:\\Users\\EA\\Desktop\\raw_texts\\";
+    private static String VEC_PATH = "";
+    private static String DATA_PATH = "";
+
     private static String MODEL_PATH = "tc.model";
     private static String TEST_PATH = "tc.test";
 
@@ -21,8 +25,31 @@ public class Main {
     private static Map<File, String> tests = null;
 
     public static void main(String[] args) throws IOException {
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "-d":
+                    DEBUG = true;
+                    break;
+                case "-vec":
+                    VEC_PATH = args[++i];
+                    break;
+                case "-data":
+                    DATA_PATH = args[++i];
+                    break;
+                default:
+                    System.err.println("what is " + args[i] + "?");
+                    return;
+            }
+        }
+
         File f = new File(MODEL_PATH);
         if (!f.exists()) {
+            if (VEC_PATH.equals("") || DATA_PATH.equals("")) {
+                System.err.println("Give needed files: vectors and data.");
+                System.err.println("Usage: main -d -vec [ ] -data [ ]");
+                return;
+            }
+
             System.out.println("> Model file couldn't found. Training.");
             Map.Entry<TextCategorizator, Map<File, String>> e = trainModel();
 
@@ -31,11 +58,8 @@ public class Main {
         }
         else {
             System.out.println("> Loading model file.");
-
             model = (TextCategorizator) Serialization.readObject(MODEL_PATH);
-            //if (DEBUG)
-                //tests = (Map<File, String>) Serialization.readObject(TEST_PATH);
-
+            tests = (Map<File, String>) Serialization.readObject(TEST_PATH);
             System.out.println("> Model reading done.");
         }
 
@@ -183,15 +207,14 @@ public class Main {
             trainingFiles.put(sample.getKey(), sample.getValue());
         }
 
-        String vecFile = "C:\\Users\\EA\\Desktop\\vec.txt";
-        TextCategorizator tc = new TextCategorizator(trainingFiles, vecFile);
+        TextCategorizator tc = new TextCategorizator(trainingFiles, VEC_PATH);
 
         Serialization.writeObject(tc, MODEL_PATH);
-        //Serialization.writeObject(testFiles, TEST_PATH);
+        Serialization.writeObject(testFiles, TEST_PATH);
 
         long end = System.currentTimeMillis();
         NumberFormat formatter = new DecimalFormat("#0.00000");
-        System.out.println("Training time is " +
+        System.out.println("Training done in " +
                 formatter.format((end - start) / 1000d) + " seconds.");
 
         return new AbstractMap.SimpleEntry<>(tc, testFiles);
